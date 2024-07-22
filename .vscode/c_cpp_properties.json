@@ -1,0 +1,24 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/christian/Desktop/robot-common/install/pcl_filter_3d_utilities/include/**",
+        "/home/christian/Desktop/robot-common/install/pcl_filter_3d_msgs/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/christian/Desktop/robot-common/src/robot-common-3d/pcl_filter_3d_msgs/include/**",
+        "/home/christian/Desktop/robot-common/src/robot-common-3d/pcl_filter_3d_utilities/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
