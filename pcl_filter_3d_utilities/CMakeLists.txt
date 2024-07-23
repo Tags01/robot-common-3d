@@ -64,7 +64,7 @@ if(BUILD_TESTING)
     # -ftrapv : detects signed overflow which is undefined per the C++ standard
     # -Wl,-z,relro : a linker flag to move immutable memory into ROM which
     #     will help detect invalid writes
-    add_compile_options(-g3 -O0 -fstack-protector-all -D FORTIFY_SOURCE=2 -ftrapv -Wl,-z,relro)
+    add_compile_options(-g3 -O0 -fstack-protector-all -D FORTIFY_SOURCE=2 -ftrapv)
   endif()
 
   find_package(ament_lint_auto REQUIRED)
