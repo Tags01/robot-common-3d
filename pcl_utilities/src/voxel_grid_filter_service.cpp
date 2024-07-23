@@ -1,18 +1,51 @@
+/*
+ * Author: Brian Flynn
+ * Date: Nov 15, 2022
+ * Editors: Christian Tagliamonte
+ * Last Modified: July 23, 2024
+ * Adapted from: https://github.com/uml-robotics/armada_behaviors/blob/main/armada_flexbe_utilities/src/service/pcl_voxel_grid_filter_service.cpp
+ *
+ * Description: Starts up a service for a PCL voxel grid filtering.
+ *
+ * Input: sensor_msgs/PointCloud2
+ * Output: sensor_msgs/PointCloud2
+ *
+ * Usage:
+ *    `ros2 launch pcl_utilities voxel_grid_filter.xml`
+ */
+
 #include <pcl/filters/voxel_grid.h>
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <functional>
-#include <memory>
+#include <functional> // std::bind, std::placeholders
+#include <memory> // std::shared_ptr, std::make_shared
+#include <string>
+
 #include <rclcpp/node.hpp>
 #include <rclcpp/service.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <string>
 
-#include "pcl_filter_3d_msgs/srv/pcl_voxel_grid_filter.hpp"
+#include "pcl_utility_msgs/srv/pcl_voxel_grid_filter.hpp"
 
-using pcl_filter_3d_msgs::srv::PCLVoxelGridFilter;
+using pcl_utility_msgs::srv::PCLVoxelGridFilter;
 const std::string g_PARAM_NAMESPACE{"filters.voxel_grid."};
 
+/*
+TODO: Check that the leaf size is large enough for the number of points.
+      Unit test will pass when the
+PCL Error:
+  `Leaf size is too small for the input dataset. Integer indices would overflow.`
+
+Test Failure:
+  ```
+  [simple_test_voxel_grid_filter-2] [ERROR] [1721769013.741232423] [tests.robot_common_3d.pcl_utilities.simple_test_voxel_grid_filter]: Sample at time: 1721769013.7074
+  produces a pointcloud with more points than the input.
+  ```
+The custom test fails only when PCL produces an error message.
+The output cloud is likely being padded with more points in this case,
+causing the number of output clouds be greater than the input cloud.
+*/
 class VoxelGridFilterService : public rclcpp::Node
 {
 protected:
@@ -28,7 +61,7 @@ public:
    * Constructor for VoxelGridFilterService class.
    */
   VoxelGridFilterService()
-  : rclcpp::Node("voxel_grid_filter_service")
+  : rclcpp::Node("voxel_grid_filter")
   {
 
     // declare all parameters above service to avoid race condition with the service
@@ -42,7 +75,7 @@ public:
       &VoxelGridFilterService::voxel_grid_filter, this, std::placeholders::_1,
       std::placeholders::_2);
 
-    voxel_grid_filter_service_ = create_service<PCLVoxelGridFilter>("voxelgrid_filter", callback);
+    voxel_grid_filter_service_ = create_service<PCLVoxelGridFilter>("voxel_grid_filter", callback);
   }
 
   /**

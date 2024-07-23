@@ -1,21 +1,15 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>pcl_filter_3d_msgs</name>
+  <name>pcl_utility_msgs</name>
   <version>1.0.0</version>
-  <description>Defines Service Files Needed for pcl_filter_3d_utilities</description>
-  <maintainer email="example@example.com">Umass HRI Lab/Nerve Center Staff</maintainer>
+  <description>Defines Service Files Needed for pcl_utilities</description>
+  <maintainer email="Christian_Tagliamonte@student.uml.edu">Christian Tagliamonte</maintainer>
   <license>TODO</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>sensor_msgs</depend>
-  <depend>std_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>tf2_geometry_msgs</depend>
-  <!-- <depend>gpd_ros</depend>
-  <depend>gqcnn</depend> -->
-
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
 

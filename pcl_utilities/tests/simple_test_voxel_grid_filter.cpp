@@ -1,11 +1,22 @@
+/*
+ * Author: Christian Tagliamonte
+ * Date: July 23, 2024
+ * Editors: N/A
+ * Last Modified: July 23, 2024
+ *
+ * Description: A node to test the voxel_grid_service. This node listens to a
+ *    point cloud topic parameter, `point_cloud_topic`, calls the service,
+ *    then outputs the output point cloud to `voxel_grid_filter/cloud_filtered`
+ *
+ * Usage:
+ *    `ros2 launch pcl_utilities test_voxel_grid_filter.xml point_cloud_topic:=<POINT_CLOUD_TOPIC>`
+ */
 #include <string>
-#include <functional>
-#include <limits>
+#include <functional> // std::bind, std::placeholders
 #include <future>
-#include <cassert>
-#include <memory>
-#include <sstream>
-#include <ios>
+#include <memory> // std::shared_ptr, std::make_shared
+#include <sstream> // std::stringstream
+#include <ios> // std::fixed, std::set_percision
 
 #include <rclcpp/node.hpp>
 #include <rclcpp/callback_group.hpp>
@@ -17,35 +28,31 @@
 #include <rclcpp/logger.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include <pcl_filter_3d_msgs/srv/pcl_voxel_grid_filter.hpp>
+#include <pcl_utility_msgs/srv/pcl_voxel_grid_filter.hpp>
 
-using pcl_filter_3d_msgs::srv::PCLVoxelGridFilter;
+using pcl_utility_msgs::srv::PCLVoxelGridFilter;
 using sensor_msgs::msg::PointCloud2;
-const std::string g_PARAM_NAMESPACE{"filters.voxel_grid."};
 
-class VoxelFilterServiceTestNode: public rclcpp::Node
+class TestVoxelFilterServiceNode: public rclcpp::Node
 {
 private:
-    rclcpp::Client<PCLVoxelGridFilter>::SharedPtr voxelgrid_filter_client_;
+    rclcpp::Client<PCLVoxelGridFilter>::SharedPtr voxel_grid_filter_client_;
     rclcpp::Subscription<PointCloud2>::SharedPtr camera_subscription_;
     rclcpp::Publisher<PointCloud2>::SharedPtr output_publisher_;
-    std::string camera_topic_;
     rclcpp::SubscriptionOptions subscriber_options_;
 
 public:
-  VoxelFilterServiceTestNode(): rclcpp::Node("voxel_filter_service_visualizer_node")
+  TestVoxelFilterServiceNode(): rclcpp::Node("simple_test_voxel_grid_filter")
   {
-    camera_topic_ = declare_parameter<std::string>("pointcloud_topic");
+    std::string camera_topic = declare_parameter<std::string>("point_cloud_topic");
+    std::string client_topic = declare_parameter<std::string>("node_client_name");
 
-    voxelgrid_filter_client_ = create_client<PCLVoxelGridFilter>(
-        "voxelgrid_filter");
+    voxel_grid_filter_client_ = create_client<PCLVoxelGridFilter>(client_topic);
 
-    output_publisher_ = create_publisher<PointCloud2>("visualization_voxel_grid_filter", 1);
+    output_publisher_ = create_publisher<PointCloud2>(
+      "voxel_grid_filter/cloud_filtered", 1);
 
     // establish callback last to avoid race conditions
-    auto camera_callback = std::bind(
-      &VoxelFilterServiceTestNode::camera_subscription_callback,
-      this, std::placeholders::_1);
 
     // ros2 implicitely calls a callback when retrieving the result
     // so the subscriber needs to be in a Re-entrant callback group
@@ -55,8 +62,12 @@ public:
     subscriber_options_.callback_group = create_callback_group(
       rclcpp::CallbackGroupType::Reentrant);
 
+    auto camera_callback = std::bind(
+      &TestVoxelFilterServiceNode::camera_subscription_callback,
+      this, std::placeholders::_1);
+
     camera_subscription_ = create_subscription<PointCloud2>(
-      camera_topic_, 1, camera_callback, subscriber_options_);
+      camera_topic, 1, camera_callback, subscriber_options_);
   }
 
   void camera_subscription_callback(PointCloud2::SharedPtr point_cloud) {
@@ -68,9 +79,9 @@ public:
     request->cloud_in = std::move(*point_cloud);
 
     auto response_future =
-      voxelgrid_filter_client_->async_send_request(request);
+      voxel_grid_filter_client_->async_send_request(request);
 
-    // retreve time to preserve appromate time message was sent
+    // retreve time to preserve approximate time message was sent
     // to format any test failures.
     double current_time = get_clock()->now().seconds();
 
@@ -110,7 +121,7 @@ int main(int argc, char ** argv) {
   rclcpp::init(argc, argv);
   rclcpp::executors::MultiThreadedExecutor executor;
 
-  auto node = std::make_shared<VoxelFilterServiceTestNode>();
+  auto node = std::make_shared<TestVoxelFilterServiceNode>();
   executor.add_node(node);
 
   executor.spin();
