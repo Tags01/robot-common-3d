@@ -32,14 +32,23 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 add_executable(pcl_voxel_grid_filter_service src/pcl_voxel_grid_filter_service.cpp)
 ament_target_dependencies(pcl_voxel_grid_filter_service rclcpp sensor_msgs pcl_conversions pcl_filter_3d_msgs pcl_ros)
 
+
 if(BUILD_TESTING)
   # All testing and visualization files are not produced if not in
   # BUILT_TESTING. Launch files will still exist but will fail to launch nodes
 
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework system )
+  include_directories(${Boost_INCLUDE_DIR})
+  
   add_executable(visualizer_pcl_voxel_grid_filter_service tests/pcl_voxel_grid_filter/visualization.cpp)
   ament_target_dependencies(visualizer_pcl_voxel_grid_filter_service rclcpp sensor_msgs pcl_ros pcl_filter_3d_msgs)
 
+  add_executable(tests_pcl_voxel_grid_filter tests/pcl_voxel_grid_filter/unit_tests.cpp)
+  ament_target_dependencies(tests_pcl_voxel_grid_filter rclcpp sensor_msgs pcl_filter_3d_msgs Boost)
+  # target_link_libraries(tests_pcl_voxel_grid_filter Boost)
+
   install(TARGETS visualizer_pcl_voxel_grid_filter_service
+#                  tests_pcl_voxel_grid_filter
     EXPORT "export_${PROJECT_NAME}"
     ARCHIVE DESTINATION lib
     LIBRARY DESTINATION lib
@@ -66,11 +75,6 @@ if(BUILD_TESTING)
   # comment the line when this package is in a git repo and when
   # a copyright and license is added to all source files
   set(ament_cmake_cpplint_FOUND TRUE)
-
-  # file(GLOB AMENT_LINT_AUTO_FILE_EXCLUDE_
-  #   build/* install/* log/*
-  # )
-
   ament_lint_auto_find_test_dependencies()
 endif()
 
