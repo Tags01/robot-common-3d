@@ -5,10 +5,16 @@
 #include <rclcpp/logger.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include <boost/test/unit_test.hpp>
 #include "pcl_filter_3d_msgs/srv/pcl_voxel_grid_filter.hpp"
 
 #include "../ros2_service_test_fixture.hpp"
+
+#ifndef BOOST_TEST_NO_MAIN
+  #define BOOST_TEST_NO_MAIN
+#endif
+
+#define BOOST_TEST_MODULE header-only multiunit test
+#include <boost/test/included/unit_test.hpp>
 
 using sensor_msgs::msg::PointCloud2;
 using pcl_filter_3d_msgs::srv::PCLVoxelGridFilter;

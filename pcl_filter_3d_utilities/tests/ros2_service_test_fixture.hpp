@@ -23,7 +23,12 @@
 #include <future>
 #include <utility>
 
-#include <boost/test/included/unit_test.hpp>
+#ifndef BOOST_TEST_NO_MAIN
+  #define BOOST_TEST_NO_MAIN
+#endif
+
+#include <boost/test/unit_test.hpp>
+
 // need this because type information may be in an unreadable form otherwise
 #include <boost/core/demangle.hpp>
 
@@ -40,31 +45,9 @@ class ROS2ServiceTestFixture {
       static rclcpp::Node::SharedPtr node_;
       static std::unordered_map<std::string, std::any> msgs_map_;
     public:
-      ROS2ServiceTestFixture()
-      {
-          const auto& master_test_suite = boost::unit_test::framework::master_test_suite();
-          rclcpp::init(master_test_suite.argc, master_test_suite.argv);
-          node_options_.automatically_declare_parameters_from_overrides(true);
-          node_options_.allow_undeclared_parameters(true);
+      ROS2ServiceTestFixture();
 
-          executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
-
-          node_ = std::make_shared<rclcpp::Node>("filter_node", "test", node_options_);
-          executor_->add_node(node_);
-          
-          callback_group_ = node_->create_callback_group(
-            rclcpp::CallbackGroupType::Reentrant);
-
-          msgs_map_ = std::unordered_map<std::string, std::any>();
-          //boost::unit_test::unit_test_log.set_format(node->get_logger());
-      }
-
-      virtual ~ROS2ServiceTestFixture() {
-        //boost::unit_test::unit_test_log::set_strean(std::cout);
-
-        rclcpp::shutdown(); // shutdown node
-      }
-
+      virtual ~ROS2ServiceTestFixture();
 
       /**
        *

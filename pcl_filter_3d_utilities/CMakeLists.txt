@@ -37,15 +37,20 @@ if(BUILD_TESTING)
   # All testing and visualization files are not produced if not in
   # BUILT_TESTING. Launch files will still exist but will fail to launch nodes
 
-  find_package(Boost REQUIRED COMPONENTS unit_test_framework system )
+  set(Boost_USE_STATIC_LIBS        ON)  # only find static libs
+  set(Boost_USE_DEBUG_LIBS        OFF)  # ignore debug libs and
+  set(Boost_USE_RELEASE_LIBS       ON)  # only find release libs
+  set(Boost_USE_MULTITHREADED      ON)
+
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework system)
   include_directories(${Boost_INCLUDE_DIR})
-  
+
   add_executable(visualizer_pcl_voxel_grid_filter_service tests/pcl_voxel_grid_filter/visualization.cpp)
   ament_target_dependencies(visualizer_pcl_voxel_grid_filter_service rclcpp sensor_msgs pcl_ros pcl_filter_3d_msgs)
 
-  add_executable(tests_pcl_voxel_grid_filter tests/pcl_voxel_grid_filter/unit_tests.cpp)
-  ament_target_dependencies(tests_pcl_voxel_grid_filter rclcpp sensor_msgs pcl_filter_3d_msgs Boost)
-  # target_link_libraries(tests_pcl_voxel_grid_filter Boost)
+  add_executable(tests_pcl_voxel_grid_filter tests/pcl_voxel_grid_filter/unit_tests.cpp tests/ros2_service_test_fixture.cpp)
+  ament_target_dependencies(tests_pcl_voxel_grid_filter rclcpp sensor_msgs pcl_filter_3d_msgs)
+  target_link_libraries(tests_pcl_voxel_grid_filter Boost::unit_test_framework Boost::system)
 
   install(TARGETS visualizer_pcl_voxel_grid_filter_service
 #                  tests_pcl_voxel_grid_filter
