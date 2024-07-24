@@ -46,6 +46,11 @@ if(BUILD_TESTING)
     pcl_utility_msgs
   )
 
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework system)
+  add_executable(unit_test tests/unit_tests.cpp tests/ros2_service_test_fixture.cpp)
+  ament_target_dependencies(unit_test ${THIS_PACKAGE_TEST_DEPS})
+  target_link_libraries(unit_test Boost::unit_test_framework Boost::system)
+
   add_executable(simple_test_voxel_grid_filter tests/simple_test_voxel_grid_filter.cpp)
   ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
 

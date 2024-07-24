@@ -5,19 +5,16 @@
 #include <rclcpp/logger.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
-#include "pcl_filter_3d_msgs/srv/pcl_voxel_grid_filter.hpp"
+#include "pcl_utility_msgs/srv/pcl_voxel_grid_filter.hpp"
+#include "./ros2_service_test_fixture.hpp"
 
-#include "../ros2_service_test_fixture.hpp"
-
-#ifndef BOOST_TEST_NO_MAIN
-  #define BOOST_TEST_NO_MAIN
-#endif
-
-#define BOOST_TEST_MODULE header-only multiunit test
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE main
 #include <boost/test/included/unit_test.hpp>
 
+
 using sensor_msgs::msg::PointCloud2;
-using pcl_filter_3d_msgs::srv::PCLVoxelGridFilter;
+using pcl_utility_msgs::srv::PCLVoxelGridFilter;
 
 static constexpr size_t TOPIC_COUNT = 30U;
 using RequestArray = std::array<
@@ -35,8 +32,10 @@ struct Fixture : public ROS2ServiceTestFixture {
   }
 };
 
+std::string Fixture::pointcloud_topic;
+std::string Fixture::service_topic;
 
-BOOST_GLOBAL_FIXTURE(Fixture);
+//BOOST_GLOBAL_FIXTURE(Fixture);
 
 //BOOST_AUTO_TEST_SUITE(voxel_grid_filter_suite)
 
@@ -61,4 +60,8 @@ BOOST_AUTO_TEST_CASE(test_output_nonzero) {
   }
 }
 
-// BOOST_AUTO_TEST_SUITE_END()
+// int main(int argc, char** argv) {
+//     return boost::unit_test::unit_test_main( init_unit_test, argc, argv );
+// }
+
+//BOOST_AUTO_TEST_SUITE_END()

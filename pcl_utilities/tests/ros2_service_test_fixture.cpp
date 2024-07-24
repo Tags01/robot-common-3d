@@ -13,14 +13,15 @@
 #include <unordered_map>
 #include <memory>
 
-#ifdef BOOST_TEST_NO_MAIN
-  #undef BOOST_TEST_NO_MAIN
-#endif
-
 #include <boost/test/unit_test.hpp>
 
-
 using Self = ROS2ServiceTestFixture;
+
+rclcpp::Executor::SharedPtr Self::executor_;
+rclcpp::NodeOptions Self::node_options_;
+rclcpp::CallbackGroup::SharedPtr Self::callback_group_;
+rclcpp::Node::SharedPtr Self::node_;
+std::unordered_map<std::string, std::any> Self::msgs_map_;
 
 ROS2ServiceTestFixture::ROS2ServiceTestFixture()
 {

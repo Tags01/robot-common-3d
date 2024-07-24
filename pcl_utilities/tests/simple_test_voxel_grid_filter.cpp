@@ -4,12 +4,16 @@
  * Editors: N/A
  * Last Modified: July 23, 2024
  *
- * Description: A node to test the voxel_grid_service. This node listens to a
- *    point cloud topic parameter, `point_cloud_topic`, calls the service,
+ * Description: A node to test the voxel_grid_service. This node listens to a 
+ *    point cloud topic parameter, `point_cloud_topic`, calls the service, 
  *    then outputs the output point cloud to `voxel_grid_filter/cloud_filtered`
- *
- * Usage:
- *    `ros2 launch pcl_utilities test_voxel_grid_filter.xml point_cloud_topic:=<POINT_CLOUD_TOPIC>`
+ *    
+ *    The service client can be changed byt
+ *     
+ * 
+ * Usage: 
+ * start camera 
+ * ros2 run [your stuff here]
  */
 #include <string>
 #include <functional> // std::bind, std::placeholders

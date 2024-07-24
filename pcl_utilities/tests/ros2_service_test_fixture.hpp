@@ -23,10 +23,6 @@
 #include <future>
 #include <utility>
 
-#ifndef BOOST_TEST_NO_MAIN
-  #define BOOST_TEST_NO_MAIN
-#endif
-
 #include <boost/test/unit_test.hpp>
 
 // need this because type information may be in an unreadable form otherwise
@@ -96,7 +92,7 @@ class ROS2ServiceTestFixture {
             std::string actual_type = boost::core::demangle(msgs_map_[topic].type().name());
 
             BOOST_ERROR("the passed type "s + incorrect_type + " does not match " + actual_type + "\n" + error.what());
-            
+
             throw std::logic_error("unreachable statement");
           }
       }
