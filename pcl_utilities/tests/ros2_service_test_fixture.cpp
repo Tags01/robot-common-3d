@@ -8,42 +8,50 @@
 #include <rclcpp/executors.hpp>
 #include <rclcpp/node_options.hpp>
 #include <rclcpp/logging.hpp>
+#include <rcl_interfaces/msg/list_parameters_result.hpp>
 
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <cstdint>
+#include <sstream>
+#include <iostream>
 
 #include <boost/test/unit_test.hpp>
 
 using Self = ROS2ServiceTestFixture;
 
 rclcpp::Executor::SharedPtr Self::executor_;
-rclcpp::NodeOptions Self::node_options_;
-rclcpp::CallbackGroup::SharedPtr Self::callback_group_;
 rclcpp::Node::SharedPtr Self::node_;
 std::unordered_map<std::string, std::any> Self::msgs_map_;
+std::stringstream Self::output_stream_{};
+rclcpp::CallbackGroup::SharedPtr Self::callback_group_;
 
-ROS2ServiceTestFixture::ROS2ServiceTestFixture()
-{
-    const auto& master_test_suite = boost::unit_test::framework::master_test_suite();
-    rclcpp::init(master_test_suite.argc, master_test_suite.argv);
-    Self::node_options_.automatically_declare_parameters_from_overrides(true);
-    Self::node_options_.allow_undeclared_parameters(true);
+ROS2ServiceTestFixture::ROS2ServiceTestFixture() {
+  boost::unit_test::master_test_suite_t& suite =
+    boost::unit_test::framework::master_test_suite();
 
-    Self::executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
+  rclcpp::init(suite.argc, suite.argv);
 
-    Self::node_ = std::make_shared<rclcpp::Node>("filter_node", "test", node_options_);
-    Self::executor_->add_node(node_);
+  Self::executor_ = std::make_shared<rclcpp::executors::MultiThreadedExecutor>();
 
-    Self::callback_group_ = node_->create_callback_group(
+  Self::node_ = std::make_shared<rclcpp::Node>("filter_node", "test");
+  Self::executor_->add_node(Self::node_);
+  Self::callback_group_ = Self::node_->create_callback_group(
     rclcpp::CallbackGroupType::Reentrant);
 
-    Self::msgs_map_ = std::unordered_map<std::string, std::any>();
-    //boost::unit_test::unit_test_log.set_format(node->get_logger());
+  Self::msgs_map_ = std::unordered_map<std::string, std::any>();
+
+  boost::unit_test::unit_test_log.set_stream(output_stream_);
 }
 
 ROS2ServiceTestFixture::~ROS2ServiceTestFixture() {
-//boost::unit_test::unit_test_log::set_strean(std::cout);
+  boost::unit_test::unit_test_log.set_stream(std::cout);
+  output_stream_ << std::flush;
+  RCLCPP_ERROR_STREAM(Self::node_->get_logger(), Self::output_stream_.str());
 
-  rclcpp::shutdown(); // shutdown node
+  Self::executor_->spin_some();
+
+  Self::executor_ = nullptr;
+  Self::node_ = nullptr;
 }

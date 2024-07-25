@@ -44,6 +44,7 @@ private:
     rclcpp::Subscription<PointCloud2>::SharedPtr camera_subscription_;
     rclcpp::Publisher<PointCloud2>::SharedPtr output_publisher_;
     rclcpp::SubscriptionOptions subscriber_options_;
+    rclcpp::CallbackGroup::SharedPtr callback_group_;
 
 public:
   TestVoxelFilterServiceNode(): rclcpp::Node("simple_test_voxel_grid_filter")

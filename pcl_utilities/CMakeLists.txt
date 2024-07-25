@@ -38,29 +38,6 @@ if(BUILD_TESTING)
   # All testing and visualization files are not produced if not in
   # BUILT_TESTING. Launch files will still exist but will fail to launch nodes
 
-  SET(
-    THIS_PACKAGE_TEST_DEPS
-    rclcpp
-    sensor_msgs
-    pcl_ros
-    pcl_utility_msgs
-  )
-
-  find_package(Boost REQUIRED COMPONENTS unit_test_framework system)
-  add_executable(unit_test tests/unit_tests.cpp tests/ros2_service_test_fixture.cpp)
-  ament_target_dependencies(unit_test ${THIS_PACKAGE_TEST_DEPS})
-  target_link_libraries(unit_test Boost::unit_test_framework Boost::system)
-
-  add_executable(simple_test_voxel_grid_filter tests/simple_test_voxel_grid_filter.cpp)
-  ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
-
-  install(TARGETS simple_test_voxel_grid_filter
-    EXPORT "export_${PROJECT_NAME}"
-    ARCHIVE DESTINATION lib
-    LIBRARY DESTINATION lib
-    RUNTIME DESTINATION lib/${PROJECT_NAME}
-    INCLUDES DESTINATION include
-  )
 
   if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # these options will make debugging memory issues and undefined behavior easier
@@ -72,6 +49,35 @@ if(BUILD_TESTING)
     #     will help detect invalid writes
     add_compile_options(-g3 -O0 -fstack-protector-all -D FORTIFY_SOURCE=2 -ftrapv -Wl,-z,relro)
   endif()
+
+  find_package(Boost REQUIRED COMPONENTS unit_test_framework system)
+  find_package(rcl_interfaces REQUIRED)
+
+  SET(
+    THIS_PACKAGE_TEST_DEPS
+    rclcpp
+    sensor_msgs
+    pcl_ros
+    pcl_utility_msgs
+    rcl_interfaces
+  )
+
+  add_executable(unit_test tests/unit_tests.cpp tests/ros2_service_test_fixture.cpp)
+  ament_target_dependencies(unit_test ${THIS_PACKAGE_TEST_DEPS})
+  target_link_libraries(unit_test Boost::unit_test_framework Boost::system)
+
+  add_executable(simple_test_voxel_grid_filter tests/simple_test_voxel_grid_filter.cpp)
+  ament_target_dependencies(simple_test_voxel_grid_filter ${THIS_PACKAGE_TEST_DEPS})
+
+  install(TARGETS simple_test_voxel_grid_filter
+                  unit_test
+    EXPORT "export_${PROJECT_NAME}"
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION lib/${PROJECT_NAME}
+    INCLUDES DESTINATION include
+  )
+
 
   find_package(ament_lint_auto REQUIRED)
   # the following line skips the linter which checks for copyrights

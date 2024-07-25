@@ -17,6 +17,16 @@
     <include file="$(find-pkg-share pcl_utilities)/launch/voxel_grid_filter.xml" />
     <node
         pkg="pcl_utilities"
+        exec="unit_test"
+        name="unit_test"
+        args="--"
+    >
+        <param name="point_cloud_topic" value="$(var point_cloud_topic)" />
+        <param name="node_client_name" value="/robot_common_3d/pcl_utilities/voxel_grid_filter" />
+    </node>
+
+    <node
+        pkg="pcl_utilities"
         exec="simple_test_voxel_grid_filter"
         name="simple_test_voxel_grid_filter"
         namespace="/tests/robot_common_3d/pcl_utilities"

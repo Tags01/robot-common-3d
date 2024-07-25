@@ -1,3 +1,6 @@
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE main
+
 #include <rclcpp/node.hpp>
 #include <rclcpp/client.hpp>
 #include <rclcpp/publisher.hpp>
@@ -7,11 +10,7 @@
 
 #include "pcl_utility_msgs/srv/pcl_voxel_grid_filter.hpp"
 #include "./ros2_service_test_fixture.hpp"
-
-#define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE main
 #include <boost/test/included/unit_test.hpp>
-
 
 using sensor_msgs::msg::PointCloud2;
 using pcl_utility_msgs::srv::PCLVoxelGridFilter;
@@ -27,17 +26,17 @@ struct Fixture : public ROS2ServiceTestFixture {
   static std::string service_topic;
 
   Fixture() {
-    pointcloud_topic = Fixture::get_node()->declare_parameter<std::string>("camera_topic");
-    service_topic = Fixture::get_node()->declare_parameter<std::string>("service_topic");
+    pointcloud_topic = Fixture::get_node()->declare_parameter<std::string>("point_cloud_topic");
+    service_topic = Fixture::get_node()->declare_parameter<std::string>("node_client_name");
   }
 };
 
 std::string Fixture::pointcloud_topic;
 std::string Fixture::service_topic;
 
-//BOOST_GLOBAL_FIXTURE(Fixture);
+BOOST_GLOBAL_FIXTURE(Fixture);
 
-//BOOST_AUTO_TEST_SUITE(voxel_grid_filter_suite)
+BOOST_AUTO_TEST_SUITE(voxel_grid_filter_suite)
 
 BOOST_AUTO_TEST_CASE(test_output_nonzero) {
   auto messages = Fixture::get_cached_messages<PointCloud2, 30>(
@@ -60,8 +59,4 @@ BOOST_AUTO_TEST_CASE(test_output_nonzero) {
   }
 }
 
-// int main(int argc, char** argv) {
-//     return boost::unit_test::unit_test_main( init_unit_test, argc, argv );
-// }
-
-//BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END()

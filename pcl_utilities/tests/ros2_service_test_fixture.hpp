@@ -10,6 +10,7 @@
 #include <rclcpp/executors.hpp>
 #include <rclcpp/node_options.hpp>
 #include <rclcpp/logging.hpp>
+#include <iostream>
 
 #include <any>
 #include <array>
@@ -22,6 +23,7 @@
 #include <vector>
 #include <future>
 #include <utility>
+#include <sstream>
 
 #include <boost/test/unit_test.hpp>
 
@@ -36,10 +38,10 @@ static const std::unordered_map<rclcpp::FutureReturnCode, std::string> RCLCPP_FU
 class ROS2ServiceTestFixture {
     private:
       static rclcpp::Executor::SharedPtr executor_;
-      static rclcpp::NodeOptions node_options_;
-      static rclcpp::CallbackGroup::SharedPtr callback_group_;
       static rclcpp::Node::SharedPtr node_;
       static std::unordered_map<std::string, std::any> msgs_map_;
+      static std::stringstream output_stream_;
+      static rclcpp::CallbackGroup::SharedPtr callback_group_;
     public:
       ROS2ServiceTestFixture();
 
@@ -75,7 +77,8 @@ class ROS2ServiceTestFixture {
               MsgArray msgs;
 
               for (auto& msg: msgs) {
-                rclcpp::wait_for_message<Message>(msg, node_, topic, wait);
+                BOOST_REQUIRE(
+                  rclcpp::wait_for_message<Message>(msg, node_, topic, wait));
               }
 
               msgs_map_[topic] = std::any(std::move(msgs));
@@ -105,13 +108,13 @@ class ROS2ServiceTestFixture {
       std::chrono::seconds call_wait = std::chrono::seconds(-1))
     {
       typename rclcpp::Client<ServiceType>::SharedPtr client =
-        node_->create_client<ServiceType>(service_name);
+        node_->create_client<ServiceType>(service_name, rmw_qos_profile_services_default, callback_group_);
       client->wait_for_service(service_wait);
       BOOST_ASSERT(client->service_is_ready());
 
       std::shared_future future = client->async_send_request(request);
       rclcpp::FutureReturnCode future_code =
-        executor_->spin_until_future_complete(future, call_wait);
+        executor_->spin_until_future_complete(future, std::chrono::milliseconds(100));
       BOOST_REQUIRE_EQUAL(RCLCPP_FUTURE_STATUS_MAP.at(future_code), "SUCCESS");
       return future.get();
     }
@@ -125,7 +128,7 @@ class ROS2ServiceTestFixture {
         std::chrono::seconds call_wait = std::chrono::seconds(-1))
     {
       typename rclcpp::Client<ServiceType>::SharedPtr
-        client = node_->create_client<ServiceType>(service_name);
+        client = node_->create_client<ServiceType>(service_name, rmw_qos_profile_services_default, callback_group_);
       client->wait_for_service(service_wait);
       BOOST_ASSERT(client->service_is_ready());
 
@@ -137,7 +140,7 @@ class ROS2ServiceTestFixture {
       }
 
       auto future_awaiter = [&call_wait](auto&& future) {
-          rclcpp::FutureReturnCode result = executor_->spin_until_future_complete(future, call_wait);
+          rclcpp::FutureReturnCode result = executor_->spin_until_future_complete(future, std::chrono::milliseconds(10000));
           BOOST_REQUIRE_EQUAL(RCLCPP_FUTURE_STATUS_MAP.at(result), "SUCCESS");
 
           return future.get();
@@ -147,6 +150,16 @@ class ROS2ServiceTestFixture {
         awaitable_responses.begin(), awaitable_responses.end(),
         dest_start, future_awaiter);
     }
+
+    // template<Typename FutureLike>
+    // static poll_until_future_complete(
+    //   FutureLike future,
+    //   std::chrono::nanoseconds poll_rate = std::chrono::nanoseconds(50)
+    //   std::chrono::nanoseconds wait = std::chrono::nanoseconds(-1)) {
+    //     if rclcpp::spin
+
+
+    //   }
 
     static rclcpp::Node::SharedPtr get_node() {
       return node_;
