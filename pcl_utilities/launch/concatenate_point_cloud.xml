@@ -1,0 +1,9 @@
+<launch>
+    <!-- This launch file is provided for consistency -->
+    <node
+        pkg="pcl_utilities"
+        exec="concatenate_point_cloud_service"
+        name="concatenate_point_cloud"
+        namespace="concatenate_point_cloud/pcl_concatenate_point_cloud"
+    />
+</launch>

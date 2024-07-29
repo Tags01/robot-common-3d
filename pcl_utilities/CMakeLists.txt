@@ -62,7 +62,7 @@ if(BUILD_TESTING)
     rcl_interfaces
   )
 
-  add_executable(unit_test tests/unit_tests.cpp tests/ros2_service_test_fixture.cpp)
+  add_executable(unit_test tests/unit_tests.cpp tests/ros2_test_fixture.cpp)
   ament_target_dependencies(unit_test ${THIS_PACKAGE_TEST_DEPS})
   target_link_libraries(unit_test Boost::unit_test_framework Boost::system)
 

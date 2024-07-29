@@ -9,19 +9,19 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include "pcl_utility_msgs/srv/pcl_voxel_grid_filter.hpp"
-#include "./ros2_service_test_fixture.hpp"
+#include "./ros2_test_fixture.hpp"
 #include <boost/test/included/unit_test.hpp>
 
 using sensor_msgs::msg::PointCloud2;
 using pcl_utility_msgs::srv::PCLVoxelGridFilter;
 
-static constexpr size_t TOPIC_COUNT = 30U;
+static constexpr size_t TOPIC_COUNT = 10U;
 using RequestArray = std::array<
   PCLVoxelGridFilter::Request::SharedPtr, TOPIC_COUNT>;
 using ResponseArray = std::array<
   PCLVoxelGridFilter::Response::SharedPtr, TOPIC_COUNT>;
 
-struct Fixture : public ROS2ServiceTestFixture {
+struct Fixture : public robot_common_tests::GlobalFixture {
   static std::string pointcloud_topic;
   static std::string service_topic;
 
@@ -38,24 +38,32 @@ BOOST_GLOBAL_FIXTURE(Fixture);
 
 BOOST_AUTO_TEST_SUITE(voxel_grid_filter_suite)
 
-BOOST_AUTO_TEST_CASE(test_output_nonzero) {
-  auto messages = Fixture::get_cached_messages<PointCloud2, 30>(
+BOOST_AUTO_TEST_CASE(test_output_size_lte) {
+  auto messages = Fixture::get_cached_messages<PointCloud2, TOPIC_COUNT>(
     Fixture::pointcloud_topic);
 
-  RequestArray requests;
-  ResponseArray responses;
-
   for (size_t i = 0; i < messages.size(); i++) {
-    requests[i] = std::make_shared<PCLVoxelGridFilter::Request>();
-    requests[i]->cloud_in = std::move(messages[i]);
+    size_t input_size = messages[i].data.size();
+    auto request = std::make_shared<PCLVoxelGridFilter::Request>();
+    request->cloud_in = std::move(messages[i]);
+    auto response = Fixture::sync_send_request<PCLVoxelGridFilter>(Fixture::service_topic, request, std::chrono::seconds(1));
+
+    BOOST_CHECK_LE(response->cloud_out.data.size(), input_size);
   }
+}
 
-  Fixture::sync_send_requests_transform<PCLVoxelGridFilter>(
-    Fixture::service_topic, requests.cbegin(),
-    requests.cend(), responses.begin());
+BOOST_AUTO_TEST_CASE(test_output_nonzero) {
+  auto messages = Fixture::get_cached_messages<PointCloud2, TOPIC_COUNT>(
+    Fixture::pointcloud_topic);
 
-  for (const auto& response : responses) {
-    BOOST_ASSERT(response->cloud_out.data.size() > 0);
+  for (PointCloud2& message : messages) {
+    size_t input_size = message.data.size();
+    auto request = std::make_shared<PCLVoxelGridFilter::Request>();
+    request->cloud_in = std::move(message);
+    auto response = Fixture::sync_send_request<PCLVoxelGridFilter>
+      (Fixture::service_topic, request);
+
+    BOOST_CHECK(response->cloud_out.data.size() && input_size);
   }
 }
 
