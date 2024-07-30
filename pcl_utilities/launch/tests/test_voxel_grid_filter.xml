@@ -13,12 +13,10 @@
         test_args="-/-wait_for_debugger" -/-launch-prefix="gnome-terminal -/- gdb -/-args"
         ```
     -->
-    <arg name="test_port" default="4444" />
-    <arg name="client_port" default="4445" />
 
     <arg name="point_cloud_topic" />
     <arg name="test_args" default=""/>
-    <!--<include file="$(find-pkg-share pcl_utilities)/launch/voxel_grid_filter.xml" />-->
+    <include file="$(find-pkg-share pcl_utilities)/launch/voxel_grid_filter.xml" />
     <node
         pkg="pcl_utilities"
         exec="unit_test"
