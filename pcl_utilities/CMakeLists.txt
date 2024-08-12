@@ -1,16 +1,23 @@
 cmake_minimum_required(VERSION 3.8)
 project(pcl_utilities)
 
+message("CMAKE_C_FLAGS_DEBUG is ${CMAKE_C_FLAGS_DEBUG}")
+message("CMAKE_C_FLAGS_RELEASE is ${CMAKE_C_FLAGS_RELEASE}")
+message("CMAKE_C_FLAGS_RELWITHDEBINFO is ${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+message("CMAKE_C_FLAGS_MINSIZEREL is ${CMAKE_C_FLAGS_MINSIZEREL}")
+
+message("CMAKE_CXX_FLAGS_DEBUG is ${CMAKE_CXX_FLAGS_DEBUG}")
+message("CMAKE_CXX_FLAGS_RELEASE is ${CMAKE_CXX_FLAGS_RELEASE}")
+message("CMAKE_CXX_FLAGS_RELWITHDEBINFO is ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+message("CMAKE_CXX_FLAGS_MINSIZEREL is ${CMAKE_CXX_FLAGS_MINSIZEREL}")
+
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-  # disable the error message associated with VLAs for now until changed
-  add_compile_options(-Wall -Wextra -Wpedantic) # -Werror
-endif()
+set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
+# set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 
-find_package(PCL REQUIRED)
 # PCL may fail to link with certain environments where
 # `PCL_ROOT` becomes set to '/'.
 # See: https://github.com/PointCloudLibrary/pcl/issues/4661
@@ -20,8 +27,10 @@ find_package(PCL REQUIRED)
 # - check PCL_ROOT is not '/' with: `variable_watch(PCL_ROOT)`
 #
 # Fix by setting PCL_DIR to the path of the PCL cmake file:
-# set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 
+include(build_target_option_flags.cmake)
+
+find_package(PCL REQUIRED)
 find_package(ament_cmake REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(pcl_utility_msgs REQUIRED)
@@ -46,28 +55,25 @@ add_library(${PROJECT_NAME} INTERFACE)
 
 add_executable(voxel_grid_filter_service src/voxel_grid_filter_service.cpp)
 add_executable(concatenate_point_cloud_service src/concatenate_point_cloud_service.cpp)
-ament_target_dependencies(voxel_grid_filter_service ${THIS_PACKAGE_DEPS})
-ament_target_dependencies(concatenate_point_cloud_service ${THIS_PACKAGE_DEPS})
 
 set(THIS_PACKAGE_EXECS
   voxel_grid_filter_service
   concatenate_point_cloud_service
 )
 
+foreach(TARGET ${THIS_PACKAGE_EXECS})
+  ament_target_dependencies(${TARGET} PUBLIC ${THIS_PACKAGE_DEPS})
+  target_add_configuration_from_build_type(
+    ${TARGET} PUBLIC "${CMAKE_BUILD_TYPE}" ${BTOF_DEFAULT})
+
+  if(DEFINED SANITIZE)
+    target_add_sanitizers(${TARGET} PUBLIC ${SANITIZE})
+  endif()
+endforeach()
+
 if(BUILD_TESTING)
   # All testing and visualization files are not produced if not in
   # BUILT_TESTING. Launch files will still exist but will fail to launch nodes
-
-  if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    # these options will make debugging memory issues and undefined behavior easier
-    # -g3 -O0 : make debugging easier using GDB
-    # -fstack-protector-all : will crash if stack corruption is detected
-    # -D FORTIFY_SOURCE=2 : adds memory corruption protections
-    # -ftrapv : detects signed overflow which is undefined per the C++ standard
-    # -Wl,-z,relro : a linker flag to move immutable memory into ROM which
-    #     will help detect invalid writes
-    add_compile_options(-g3 -O0 -fstack-protector-all -D FORTIFY_SOURCE=2 -ftrapv -Wl,-z,relro)
-  endif()
 
   SET(
     THIS_PACKAGE_TEST_DEPS
@@ -99,6 +105,33 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+#[[
+  This is a workaround for a issue within Clang and BOOST MPL.
+  BOOST MPL invokes undefined behavior by casting an integer to an enum
+  value that does not exist. PCL uses Boost MPL so many header files do not
+  compile. This should be fixed in the next release of Boost, version 1.86.0
+
+  Clang failed to diagnose the issue until version 16.0.0
+  after which it was a error. This detects the issue and opts out of the check
+
+  NOTE: Compiler's that use Clang internally but that use different versioning
+  always apply the flag do to a lack of documentation. An error may be raised
+  for these compilers.
+]]#
+if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
+    CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0.0) OR
+    CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+  find_package(Boost)
+  if (
+    Boost_FOUND AND
+    Boost_VERSION VERSION_LESS_EQUAL "1.86.0"
+  )
+    foreach (EXECUTABLE ${THIS_PACKAGE_EXECS})
+      target_compile_options(${EXECUTABLE} PUBLIC -Wno-enum-constexpr-conversion)
+    endforeach()
+  endif()
+endif()
+
 install(TARGETS
   ${THIS_PACKAGE_EXECS}
   EXPORT "export_${PROJECT_NAME}"
@@ -110,6 +143,9 @@ install(TARGETS
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}/
 )
+
+ament_environment_hooks(
+  sanitizer.dsv)
 
 ament_export_targets("export_${PROJECT_NAME}")
 ament_package()

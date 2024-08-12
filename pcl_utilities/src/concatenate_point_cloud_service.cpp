@@ -22,7 +22,6 @@
 #include <string>
 #include <utility>  // std::move
 
-#include "pcl/impl/point_types.hpp"
 #include "pcl/point_cloud.h"
 
 #include "pcl_utility_msgs/srv/pcl_concatenate_point_cloud.hpp"
