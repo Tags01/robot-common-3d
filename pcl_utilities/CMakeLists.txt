@@ -1,21 +1,16 @@
-cmake_minimum_required(VERSION 3.8)
+
+# Note the higher version of CMAKE, needed for indirect calls (released in 2020)
+cmake_minimum_required(VERSION 3.19)
 project(pcl_utilities)
 
-message("CMAKE_C_FLAGS_DEBUG is ${CMAKE_C_FLAGS_DEBUG}")
-message("CMAKE_C_FLAGS_RELEASE is ${CMAKE_C_FLAGS_RELEASE}")
-message("CMAKE_C_FLAGS_RELWITHDEBINFO is ${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-message("CMAKE_C_FLAGS_MINSIZEREL is ${CMAKE_C_FLAGS_MINSIZEREL}")
-
-message("CMAKE_CXX_FLAGS_DEBUG is ${CMAKE_CXX_FLAGS_DEBUG}")
-message("CMAKE_CXX_FLAGS_RELEASE is ${CMAKE_CXX_FLAGS_RELEASE}")
-message("CMAKE_CXX_FLAGS_RELWITHDEBINFO is ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-message("CMAKE_CXX_FLAGS_MINSIZEREL is ${CMAKE_CXX_FLAGS_MINSIZEREL}")
-
+# Use new policy with interprocedural optimization in this file
+cmake_policy(SET CMP0069 NEW)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
 
-set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
+# set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 # set(PCL_DIR /usr/lib/x86_64-linux-gnu/cmake/pcl)
 
 # PCL may fail to link with certain environments where
@@ -63,12 +58,10 @@ set(THIS_PACKAGE_EXECS
 
 foreach(TARGET ${THIS_PACKAGE_EXECS})
   ament_target_dependencies(${TARGET} PUBLIC ${THIS_PACKAGE_DEPS})
-  target_add_configuration_from_build_type(
-    ${TARGET} PUBLIC "${CMAKE_BUILD_TYPE}" ${BTOF_DEFAULT})
 
-  if(DEFINED SANITIZE)
-    target_add_sanitizers(${TARGET} PUBLIC ${SANITIZE})
-  endif()
+  botf_target_configurations(
+    ${TARGET} PUBLIC CXX
+    ${BTOF_DEFAULT} btof_add_sanitizers)
 endforeach()
 
 if(BUILD_TESTING)
@@ -111,21 +104,19 @@ endif()
   value that does not exist. PCL uses Boost MPL so many header files do not
   compile. This should be fixed in the next release of Boost, version 1.86.0
 
-  Clang failed to diagnose the issue until version 16.0.0
+  Clang failed to diagnose the issue until version 18.0.0
   after which it was a error. This detects the issue and opts out of the check
 
   NOTE: Compiler's that use Clang internally but that use different versioning
-  always apply the flag do to a lack of documentation. An error may be raised
-  for these compilers.
+  always apply the flag do to a lack of documentation. A warning may
+
+  See for more info: https://github.com/boostorg/mpl/issues/69
 ]]#
 if ((CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND
     CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 16.0.0) OR
-    CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+    CMAKE_CXX_COMPILER_ID MATCHES ${BTOF_CLANGLIKE_MATCH_REGEX})
   find_package(Boost)
-  if (
-    Boost_FOUND AND
-    Boost_VERSION VERSION_LESS_EQUAL "1.86.0"
-  )
+  if (Boost_FOUND AND Boost_VERSION VERSION_LESS_EQUAL 1.86.0)
     foreach (EXECUTABLE ${THIS_PACKAGE_EXECS})
       target_compile_options(${EXECUTABLE} PUBLIC -Wno-enum-constexpr-conversion)
     endforeach()
@@ -144,8 +135,13 @@ install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME}/
 )
 
-ament_environment_hooks(
-  sanitizer.dsv)
+# Note the use of enviorment variables for AddressSanitizer,
+# Can conflict with other libraries if they also use build with address sanitizer
+# options. But could help avoid an extra setup.
+
+# Only sets the ASAN_OPTIONS variable if not set, will not overidde user options
+# Gets sourced during `. install/setup.sh`
+ament_environment_hooks(sanitizer.dsv)
 
 ament_export_targets("export_${PROJECT_NAME}")
 ament_package()
