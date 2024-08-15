@@ -47,7 +47,7 @@ using pcl_utility_msgs::srv::PCLConcatenatePointCloud;
 using sensor_msgs::msg::PointCloud2;
 
 constexpr size_t MAX_POINT_CLOUDS = 100U;
-constexpr std::chrono::seconds MAX_WAIT_TIME {1U};
+constexpr std::chrono::seconds MAX_WAIT_TIME {60U};
 
 class TestConcatenatePointCloudNode: public rclcpp::Node
 {

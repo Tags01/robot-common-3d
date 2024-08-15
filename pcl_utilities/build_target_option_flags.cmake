@@ -129,7 +129,6 @@ function (btof_add_sanitizers TARGET VISIBILITY LANG)
       "Sanitizers could not be added to the target, '${TARGET}'"
       "due to an unsupported compiler. Only GCC and CLANG-like compilers are supported"
     )
-    endif()
   endif()
 
   # fortify source cannot be higher than 0 when using sanitizers
@@ -143,17 +142,12 @@ endfunction()
 # define which functions will be called in which order
 # order is important
 set(BTOF_DEFAULT_COMPILE
-  btof_default_gnulike_pedantic
-  btof_default_msvclike_syntax)
+  btof_default_gnulike_pedantic)
 set(BTOF_DEFAULT_DEBUG btof_default_debug_definitions
-  btof_default_gnulike_debug
-  btof_default_msvclike_debug)
-set(BTOF_DEFAULT_RELEASE btof_default_release_ipo
-  btof_default_gnulike_optimize
-  btof_default_msvclike_optimize)
-
-# These options are designed to trigger warnings for unknown compilers and releases
-set(BTOF_KNOWN_COMPILERS Clang MSVC IntelLLVM GLU)
+  btof_default_gnulike_debug)
+set(BTOF_DEFAULT_RELEASE
+  btof_default_release_ipo
+  btof_default_gnulike_optimize)
 
 # Default options for building targets
 set(BTOF_DEFAULT ${BTOF_DEFAULT_COMPILE} ${BTOF_DEFAULT_DEBUG} ${BTOF_DEFAULT_RELEASE})
