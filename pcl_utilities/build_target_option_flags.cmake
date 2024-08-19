@@ -108,10 +108,14 @@ function (btof_add_sanitizers TARGET VISIBILITY LANG)
   set (SANITIZERS)
   if (NOT "${ARGN}" STREQUAL "")
     list(APPEND SANITIZERS ${ARGN})
-  elseif(DEFINED PROJECT_SANITIZERS)
-    list(APPEND SANITIZERS ${SANITIZE})
-  elseif(DEFINED ENV{PROJECT_SANITIZERS})
-    list(APPEND SANITIZERS $ENV{PROJECT_SANITIZERS})
+  elseif(DEFINED ${PROJECT_NAME}_SANITIZERS)
+    list(APPEND SANITIZERS ${${PROJECT_NAME}_SANITIZERS})
+  elseif(DEFINED ENV{${PROJECT_NAME}_SANITIZERS})
+    list(APPEND SANITIZERS $ENV{${PROJECT_NAME}_SANITIZERS})
+  elseif(DEFINED SANITIZERS)
+    list(APPEND SANITIZERS ${SANITIZERS})
+  elseif(DEFINED ENV{SANITIZERS})
+    list(APPEND SANITIZERS ${SANITIZERS})
   endif()
 
   # format the provided sanitizers so they can be passed to clang
@@ -131,12 +135,30 @@ function (btof_add_sanitizers TARGET VISIBILITY LANG)
     )
   endif()
 
+  # CFI sanitizer requires use with LTO
+  if (SANITIZRS STREQUAL "cfi")
+    check_ipo_supported(RESULT IS_LTO_SUPPORTED OUTPUT UNUSED LANGUAGES ${LANG})
+    if (NOT IS_IPO_SUPPORTED)
+      message(WARNING "The CFI sanitizer cannot be used if lto is not enabled")
+      return()
+    endif()
+
+    set_properties(
+      TARGET ${TARGET} APPEND PROPERTY STATIC_LIBRARY_OPTIONS
+      -flto-visibility=hidden)
+  endif()
+
+  set(SANITIZER_FLAGS -fsanitize=${SANITIZERS} -fsanitize-recover)
+
   # fortify source cannot be higher than 0 when using sanitizers
   target_compile_options(${TARGET} ${VISIBILITY}
-    -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0
-    -fsanitize=${SANITIZERS})
+    -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0 ${SANITIZER_FLAGS})
 
-  target_link_options(${TARGET} ${VISIBILITY} -fsanitize=${SANITIZERS})
+  target_link_options(${TARGET} ${VISIBILITY} ${SANITIZER_FLAGS})
+  set_property(
+    TARGET ${TARGET} APPEND PROPERTY STATIC_LIBRARY_OPTIONS
+    ${SANITIZER_FLAGS})
+
 endfunction()
 
 # define which functions will be called in which order
