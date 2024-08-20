@@ -74,7 +74,7 @@ function(btof_default_debug_definitions TARGET VISIBILITY LANG)
 endfunction()
 
 function(btof_default_gnulike_pedantic TARGET VISIBILITY LANG)
-  if (CMAKE_${LANG}_COMPILER_ID MATCHES ${BTOF_GNULIKE_MATCH_REGEX})
+  if (CMAKE_${LANG}_COMPILER_ID MATCHES "${BTOF_GNULIKE_MATCH_REGEX}")
     target_compile_options(${TARGET} ${VISIBILITY}
       -Wall;-Wextra;-Wpedantic
       -Wfloat-equal;-Wundef;-Wshadow
@@ -85,7 +85,7 @@ function(btof_default_gnulike_pedantic TARGET VISIBILITY LANG)
 endfunction()
 
 function(btof_default_gnulike_optimize TARGET VISIBILITY LANG)
-  if (CMAKE_${LANG}_COMPILER_ID MATCHES ${BTOF_GNULIKE_MATCH_REGEX})
+  if (CMAKE_${LANG}_COMPILER_ID MATCHES "${BTOF_GNULIKE_MATCH_REGEX}")
     set (OPTIONS
       "$<$<CONFIG:Release,RelWithDebInfo>:-O3>"
       "$<$<CONFIG:MinSizeRel>:-Os>")
@@ -96,7 +96,7 @@ function(btof_default_gnulike_optimize TARGET VISIBILITY LANG)
 endfunction()
 
 function(btof_default_gnulike_debug TARGET VISIBILITY LANG)
-  if (CMAKE_${LANG}_COMPILER_ID MATCHES ${BTOF_GNULIKE_MATCH_REGEX})
+  if (CMAKE_${LANG}_COMPILER_ID MATCHES "${BTOF_GNULIKE_MATCH_REGEX}")
     target_compile_options(${TARGET} ${VISIBILITY}
       "$<$<CONFIG:Debug,RelWithDebInfo>:-g3>")
   endif()
@@ -128,22 +128,27 @@ function (btof_add_sanitizers TARGET VISIBILITY LANG)
     return()
   endif()
 
-  if (CMAKE_${LANG}_COMPILER_ID MATCHES ${BTOF_GNULIKE_MATCH_REGEX})
+  if (NOT CMAKE_${LANG}_COMPILER_ID MATCHES "${BTOF_GNULIKE_MATCH_REGEX}")
     message(WARNING
       "Sanitizers could not be added to the target, '${TARGET}'"
       "due to an unsupported compiler. Only GCC and CLANG-like compilers are supported"
     )
+    return()
   endif()
 
   # CFI sanitizer requires use with LTO
-  if (SANITIZRS STREQUAL "cfi")
-    check_ipo_supported(RESULT IS_LTO_SUPPORTED OUTPUT UNUSED LANGUAGES ${LANG})
+  if (SANITIZERS STREQUAL "cfi")
+    check_ipo_supported(RESULT IS_IPO_SUPPORTED OUTPUT REASON LANGUAGES ${LANG})
     if (NOT IS_IPO_SUPPORTED)
-      message(WARNING "The CFI sanitizer cannot be used if lto is not enabled")
+      message(WARNING "The CFI sanitizer cannot be used if lto is not enabled. LTO Could not be enabled for ${REASON}")
       return()
     endif()
 
-    set_properties(
+    set_target_properties(${TARGET} PROPERTIES
+      INTERPROCEDURAL_OPTIMIZATION ON
+    )
+
+    set_property(
       TARGET ${TARGET} APPEND PROPERTY STATIC_LIBRARY_OPTIONS
       -flto-visibility=hidden)
   endif()

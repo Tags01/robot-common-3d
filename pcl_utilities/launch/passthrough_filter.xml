@@ -1,0 +1,22 @@
+<launch>
+    <node
+        pkg="pcl_utilities"
+        exec="passthrough_filter_service"
+        name="passthrough_filter_service"
+        namespace="robot_common_3d/pcl_utilities"
+        output="screen"
+    >
+        <!--
+          Default options are set to a unit cube
+          (max - min) > 0.f must always be true. All values must be positive,
+          not zero, and not NaN. All values must fit within the range of a float,
+          otherwise the values should be set to Infinity.
+        -->
+        <param name="filters.passthrough.x.min" value="-0.5" />
+        <param name="filters.passthrough.x.max" value="0.5" />
+        <param name="filters.passthrough.y.min" value="-0.5" />
+        <param name="filters.passthrough.y.max" value="0.5" />
+        <param name="filters.passthrough.z.min" value="-0.5" />
+        <param name="filters.passthrough.z.max" value="0.5" />
+    </node>
+</launch>
