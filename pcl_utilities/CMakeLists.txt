@@ -60,8 +60,8 @@ foreach(TARGET ${THIS_PACKAGE_EXECS})
   ament_target_dependencies(${TARGET} PUBLIC ${THIS_PACKAGE_DEPS})
 
   botf_target_configurations(
-    ${TARGET} PUBLIC CXX
-    ${BTOF_DEFAULT} btof_add_sanitizers)
+    ${TARGET} PUBLIC FUNCTIONS ${BTOF_DEFAULT} btof_add_sanitizers FAILURE ${FAILURE})
+  message(WARNING "${FAILURE}")
 endforeach()
 
 if(BUILD_TESTING)
